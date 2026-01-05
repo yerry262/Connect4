@@ -1,0 +1,41 @@
+{
+  "currentUser": null,
+  "users": [
+    {
+      "id": "u1",
+      "username": "CoolPlayer",
+      "friends": ["u2", "u3"],
+      "isOnline": true
+    },
+    {
+      "id": "u2",
+      "username": "ConnectMaster",
+      "friends": ["u1"],
+      "isOnline": false
+    },
+    {
+      "id": "u3",
+      "username": "Newbie",
+      "friends": ["u1"],
+      "isOnline": true
+    }
+  ],
+  "games": [
+    {
+      "id": "g1",
+      "players": ["u1", "u2"],
+      "currentTurn": "u1",
+      "board": [
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null]
+      ],
+      "status": "active",
+      "lastMove": "2023-10-27T10:00:00Z"
+    }
+  ],
+  "challenges": []
+}

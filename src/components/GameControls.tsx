@@ -16,6 +16,7 @@ import {
   ExitToApp,
   Undo,
   Home,
+  Stop,
 } from '@mui/icons-material';
 import { useState } from 'react';
 
@@ -27,6 +28,7 @@ interface GameControlsProps {
   onReset: () => void;
   onExit: () => void;
   onUndo: () => void;
+  onEndGame: () => void;
   canUndo: boolean;
 }
 
@@ -38,6 +40,7 @@ export function GameControls({
   onReset,
   onExit,
   onUndo,
+  onEndGame,
   canUndo,
 }: GameControlsProps) {
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -79,6 +82,19 @@ export function GameControls({
               title={isPaused ? 'Resume' : 'Pause'}
             >
               {isPaused ? <PlayArrow /> : <Pause />}
+            </IconButton>
+          </motion.div>
+        )}
+
+        {/* End Game Button */}
+        {!isGameOver && (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <IconButton
+              onClick={onEndGame}
+              sx={buttonStyle}
+              title="End Game"
+            >
+              <Stop />
             </IconButton>
           </motion.div>
         )}

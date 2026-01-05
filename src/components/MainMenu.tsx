@@ -8,33 +8,58 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Switch,
+  FormControlLabel,
+  Slider,
+  Dialog,
 } from '@mui/material';
-import { PlayArrow, Person, Computer } from '@mui/icons-material';
+import { PlayArrow, Person, Computer, Public, Timer } from '@mui/icons-material';
 import { DEFAULT_COLORS } from '../types';
-import type { GameMode, Player } from '../types';
+import type { AIDifficulty, GameMode, Player } from '../types';
+import { OnlineDashboard } from './OnlineDashboard';
 
 interface MainMenuProps {
-  onStartGame: (players: [Player, Player], gameMode: GameMode) => void;
+  onStartGame: (
+    players: [Player, Player],
+    gameMode: GameMode,
+    aiDifficulty?: AIDifficulty,
+    timerEnabled?: boolean,
+    timePerTurn?: number
+  ) => void;
+  onStartOnlineGame?: (gameId: string) => void;
 }
 
-export function MainMenu({ onStartGame }: MainMenuProps) {
+export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
   const [gameMode, setGameMode] = useState<GameMode>('1v1');
   const [player1Name, setPlayer1Name] = useState('Player 1');
   const [player2Name, setPlayer2Name] = useState('Player 2');
   const [player1Color, setPlayer1Color] = useState(DEFAULT_COLORS.player1[0]);
   const [player2Color, setPlayer2Color] = useState(DEFAULT_COLORS.player2[0]);
+  const [aiDifficulty, setAIDifficulty] = useState<AIDifficulty>('medium');
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timePerTurn, setTimePerTurn] = useState(30);
+  const [showOnlineDashboard, setShowOnlineDashboard] = useState(false);
 
   const handleStartGame = () => {
+    if (gameMode === 'online') {
+      setShowOnlineDashboard(true);
+      return;
+    }
+
     const players: [Player, Player] = [
       { id: 1, name: player1Name, color: player1Color, isComputer: false },
       {
         id: 2,
-        name: gameMode === '1vPC' ? 'Computer' : player2Name,
+        name: gameMode === '1vPC' ? `Computer (${aiDifficulty})` : player2Name,
         color: player2Color,
         isComputer: gameMode === '1vPC',
       },
     ];
-    onStartGame(players, gameMode);
+    onStartGame(players, gameMode, gameMode === '1vPC' ? aiDifficulty : undefined, timerEnabled, timePerTurn);
   };
 
   return (
@@ -48,6 +73,21 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
         p: 3,
       }}
     >
+      <Dialog 
+        open={showOnlineDashboard} 
+        onClose={() => setShowOnlineDashboard(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <OnlineDashboard 
+          onStartGame={(gameId) => {
+            setShowOnlineDashboard(false);
+            onStartOnlineGame?.(gameId);
+          }}
+          onClose={() => setShowOnlineDashboard(false)}
+        />
+      </Dialog>
+
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -128,13 +168,95 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
             <ToggleButton value="1v1">
               <Person sx={{ mr: 1 }} /> 1 vs 1
             </ToggleButton>
-            <ToggleButton value="1vPC" disabled>
+            <ToggleButton value="1vPC">
               <Computer sx={{ mr: 1 }} /> vs Computer
-              <Typography variant="caption" sx={{ ml: 1, opacity: 0.7 }}>
-                (Coming Soon)
-              </Typography>
+            </ToggleButton>
+            <ToggleButton value="online">
+              <Public sx={{ mr: 1 }} /> Online PvP
             </ToggleButton>
           </ToggleButtonGroup>
+
+          {gameMode === 'online' ? (
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Typography variant="body1" sx={{ color: 'white', mb: 2 }}>
+                Play with friends or challenge others online!
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {/* AI Difficulty Selection - only show for 1vPC mode */}
+              {gameMode === '1vPC' && (
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel 
+                  id="difficulty-label"
+                  sx={{ color: 'rgba(255,255,255,0.7)' }}
+                >
+                  Difficulty
+                </InputLabel>
+                <Select
+                  labelId="difficulty-label"
+                  value={aiDifficulty}
+                  label="Difficulty"
+                  onChange={(e) => setAIDifficulty(e.target.value as AIDifficulty)}
+                  sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.3)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.5)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#6C5CE7',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: 'white',
+                    },
+                  }}
+                >
+                  <MenuItem value="easy">Easy - Random moves</MenuItem>
+                  <MenuItem value="medium">Medium - Strategic</MenuItem>
+                  <MenuItem value="hard">Hard - Expert AI</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+
+          {/* Timer Settings */}
+          <Box sx={{ mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={timerEnabled}
+                  onChange={(e) => setTimerEnabled(e.target.checked)}
+                  color="secondary"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', color: 'white' }}>
+                  <Timer sx={{ mr: 1 }} /> Timer per Turn
+                </Box>
+              }
+            />
+            {timerEnabled && (
+              <Box sx={{ px: 2, mt: 1 }}>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  {timePerTurn} seconds
+                </Typography>
+                <Slider
+                  value={timePerTurn}
+                  onChange={(_, value) => setTimePerTurn(value as number)}
+                  min={5}
+                  max={60}
+                  step={5}
+                  marks
+                  valueLabelDisplay="auto"
+                  sx={{ color: '#FF6B6B' }}
+                />
+              </Box>
+            )}
+          </Box>
 
           {/* Player 1 Setup */}
           <Box sx={{ mb: 3 }}>
@@ -225,6 +347,8 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
               ))}
             </Box>
           </Box>
+          </>
+          )}
 
           {/* Start Button */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -245,7 +369,7 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
                 },
               }}
             >
-              Start Game
+              {gameMode === 'online' ? 'Open Dashboard' : 'Start Game'}
             </Button>
           </motion.div>
         </Paper>

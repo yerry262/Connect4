@@ -6,7 +6,8 @@ export const WINNING_LENGTH = 4;
 
 export type CellValue = null | 1 | 2;
 export type Board = CellValue[][];
-export type GameMode = '1v1' | '1vPC';
+export type GameMode = '1v1' | '1vPC' | 'online';
+export type AIDifficulty = 'easy' | 'medium' | 'hard';
 export type GameScreen = 'menu' | 'playing' | 'paused' | 'gameOver';
 
 export interface Player {
@@ -30,6 +31,9 @@ export interface GameState {
   winner: WinningLine | null;
   moveHistory: number[];
   isDraw: boolean;
+  timerEnabled: boolean;
+  timePerTurn: number; // in seconds
+  timeLeft: number;
 }
 
 export const DEFAULT_COLORS = {
@@ -52,7 +56,9 @@ export function createEmptyBoard(): Board {
 
 export function createInitialState(
   players: [Player, Player],
-  gameMode: GameMode
+  gameMode: GameMode,
+  timerEnabled: boolean = false,
+  timePerTurn: number = 30
 ): GameState {
   return {
     board: createEmptyBoard(),
@@ -63,5 +69,8 @@ export function createInitialState(
     winner: null,
     moveHistory: [],
     isDraw: false,
+    timerEnabled,
+    timePerTurn,
+    timeLeft: timePerTurn,
   };
 }

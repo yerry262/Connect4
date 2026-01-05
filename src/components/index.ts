@@ -4,4 +4,7 @@ export { GameControls } from './GameControls';
 export { GameOverModal } from './GameOverModal';
 export { GamePiece } from './GamePiece';
 export { MainMenu } from './MainMenu';
+export { WinCelebration } from './WinCelebration';
+export { OnlineGame } from './OnlineGame';
+export { OnlineDashboard } from './OnlineDashboard';
 export { default as Confetti } from './Confetti';

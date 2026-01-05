@@ -14,6 +14,7 @@ class SoundManager {
     // Create audio elements for different sounds
     this.sounds.set('pieceDrop', new Audio('/audio/piece-drop.mp3'));
     this.sounds.set('win', new Audio('/audio/win.mp3'));
+    this.sounds.set('casinoWin', new Audio('/audio/casino-win.mp3'));
     this.sounds.set('buttonClick', new Audio('/audio/button-click.mp3'));
     this.sounds.set('backgroundMusic', new Audio('/audio/background-music.mp3'));
     
@@ -69,6 +70,7 @@ class SoundManager {
 
   playWinSound() {
     this.playSound('win');
+    this.playSound('casinoWin');
   }
 
   playButtonClick() {

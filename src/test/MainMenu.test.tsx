@@ -47,7 +47,10 @@ describe('MainMenu Component', () => {
         expect.objectContaining({ id: 1, name: 'Player 1' }),
         expect.objectContaining({ id: 2, name: 'Player 2' }),
       ]),
-      '1v1'
+      '1v1',
+      undefined,
+      false,
+      30
     );
   });
 
@@ -67,7 +70,10 @@ describe('MainMenu Component', () => {
         expect.objectContaining({ name: 'Alice' }),
         expect.objectContaining({ name: 'Bob' }),
       ]),
-      '1v1'
+      '1v1',
+      undefined,
+      false,
+      30
     );
   });
 

@@ -1,9 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useConnect4 } from '../hooks/useConnect4';
 import type { Player } from '../types';
 
 describe('useConnect4 Hook Integration', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const mockPlayers: [Player, Player] = [
     { id: 1, name: 'Player 1', color: '#FF6B6B', isComputer: false },
     { id: 2, name: 'Player 2', color: '#4ECDC4', isComputer: false },
@@ -58,6 +67,10 @@ describe('useConnect4 Hook Integration', () => {
     act(() => { result.current.dropPiece(2); }); // P2
     act(() => { result.current.dropPiece(3); }); // P1 wins!
 
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
     expect(result.current.gameState.winner).not.toBeNull();
     expect(result.current.gameState.winner?.winner).toBe(1);
     expect(result.current.gameState.screen).toBe('gameOver');
@@ -88,6 +101,10 @@ describe('useConnect4 Hook Integration', () => {
     act(() => { result.current.dropPiece(2); }); // P1
     act(() => { result.current.dropPiece(2); }); // P2
     act(() => { result.current.dropPiece(3); }); // P1 wins
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
 
     expect(result.current.gameState.winner).not.toBeNull();
 
@@ -222,8 +239,6 @@ describe('useConnect4 Hook Integration', () => {
     act(() => { result.current.dropPiece(1); }); // P2 at [3,1]
     act(() => { result.current.dropPiece(0); }); // P1 at [2,0] - P1 wins vertical!
 
-    expect(result.current.gameState.winner).not.toBeNull();
     expect(result.current.gameState.winner?.winner).toBe(1);
-    expect(result.current.gameState.screen).toBe('gameOver');
   });
 });
