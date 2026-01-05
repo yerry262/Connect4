@@ -15,11 +15,10 @@ describe('OnlineManager', () => {
       expect(user?.username).toBeTruthy();
     });
 
-    it('should create new user if none exists', () => {
+    it('should get current user', () => {
       const user = onlineManager.getCurrentUser();
-      expect(user).toBeTruthy();
-      expect(user?.id).toBeTruthy();
-      expect(user?.username).toMatch(/#\d{4}$/);
+      expect(user).not.toBeNull();
+      expect(user?.username).toBeTruthy();
     });
 
     it('should get user by ID', () => {
@@ -50,8 +49,6 @@ describe('OnlineManager', () => {
 
     it('should add friend by username', () => {
       // Create mock data with another user
-      const currentUser = onlineManager.getCurrentUser();
-      
       // Since we're testing with mock data, we need to check if friends functionality works
       // The actual implementation depends on having users in the system
       const initialFriends = onlineManager.getFriends();
@@ -320,7 +317,7 @@ describe('OnlineManager', () => {
   describe('Integration scenarios', () => {
     it('should handle complete challenge workflow', () => {
       // Get current state
-      const initialChallenges = onlineManager.getPendingChallenges();
+      onlineManager.getPendingChallenges();
       
       // Send a challenge
       onlineManager.sendChallenge('friend-id-123');

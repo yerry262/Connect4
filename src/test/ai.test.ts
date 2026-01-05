@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getAIMove } from '../utils/ai';
 import { createEmptyBoard } from '../types';
-import type { Board, CellValue } from '../types';
 
 describe('AI Player', () => {
   describe('getAIMove - Easy Difficulty', () => {
