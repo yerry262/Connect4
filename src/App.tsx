@@ -32,6 +32,8 @@ const theme = createTheme({
 type AppScreen = 'menu' | 'game' | 'online-game';
 
 function App() {
+  console.log('App component rendering...');
+  
   const [appScreen, setAppScreen] = useState<AppScreen>('menu');
   const [onlineGameId, setOnlineGameId] = useState<string | null>(null);
   const [players, setPlayers] = useState<[Player, Player]>([

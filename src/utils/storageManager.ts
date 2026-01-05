@@ -1,4 +1,4 @@
-import { GameState, Player } from '../types/game';
+import type { GameState } from '../types/game';
 
 const STORAGE_KEYS = {
   GAME_STATE: 'connect4_game_state',

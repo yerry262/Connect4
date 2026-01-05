@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -16,11 +16,15 @@ import {
   FormControlLabel,
   Slider,
   Dialog,
+  Chip,
+  Avatar,
+  Tooltip,
 } from '@mui/material';
 import { PlayArrow, Person, Computer, Public, Timer } from '@mui/icons-material';
 import { DEFAULT_COLORS } from '../types';
 import type { AIDifficulty, GameMode, Player } from '../types';
 import { OnlineDashboard } from './OnlineDashboard';
+import { onlineManager } from '../utils/onlineManager';
 
 interface MainMenuProps {
   onStartGame: (
@@ -43,6 +47,23 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timePerTurn, setTimePerTurn] = useState(30);
   const [showOnlineDashboard, setShowOnlineDashboard] = useState(false);
+  
+  // Get current user info for display
+  const currentUser = onlineManager.getCurrentUser();
+  const [username, setUsername] = useState(currentUser?.username || 'Guest');
+  const [avatarColor, setAvatarColor] = useState(currentUser?.avatarColor || '#4ECDC4');
+
+  // Subscribe to user updates
+  useEffect(() => {
+    const unsubscribe = onlineManager.subscribe(() => {
+      const user = onlineManager.getCurrentUser();
+      if (user) {
+        setUsername(user.username);
+        setAvatarColor(user.avatarColor);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const handleStartGame = () => {
     if (gameMode === 'online') {
@@ -71,8 +92,49 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         justifyContent: 'center',
         minHeight: '100vh',
         p: 3,
+        position: 'relative',
       }}
     >
+      {/* User Profile Badge - Top Right */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+        }}
+      >
+        <Tooltip title="Your Profile - Click Online PvP to manage">
+          <Chip
+            avatar={
+              <Avatar sx={{ bgcolor: avatarColor }}>
+                {username.charAt(0).toUpperCase()}
+              </Avatar>
+            }
+            label={username}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.2)',
+              py: 2.5,
+              px: 1,
+              fontSize: '0.95rem',
+              '& .MuiChip-avatar': {
+                width: 32,
+                height: 32,
+              },
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.15)',
+              },
+            }}
+            onClick={() => setShowOnlineDashboard(true)}
+          />
+        </Tooltip>
+      </motion.div>
+
       <Dialog 
         open={showOnlineDashboard} 
         onClose={() => setShowOnlineDashboard(false)}
