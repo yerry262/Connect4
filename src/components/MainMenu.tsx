@@ -38,7 +38,7 @@ interface MainMenuProps {
 }
 
 export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
-  const [gameMode, setGameMode] = useState<GameMode>('1v1');
+  const [gameMode, setGameMode] = useState<GameMode>('1vPC');
   const [player1Name, setPlayer1Name] = useState('Player 1');
   const [player2Name, setPlayer2Name] = useState('Player 2');
   const [player1Color, setPlayer1Color] = useState(DEFAULT_COLORS.player1[0]);
