@@ -3,7 +3,6 @@ class SoundManager {
   private sounds: Map<string, HTMLAudioElement> = new Map();
   private isSoundEnabled: boolean = true;
   private isMusicEnabled: boolean = true;
-  private backgroundMusic: HTMLAudioElement | null = null;
 
   constructor() {
     // Initialize default sounds
