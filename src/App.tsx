@@ -142,8 +142,8 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '100vh',
-            p: { xs: 2, md: 3 },
-            pt: { xs: '80px', md: '96px' }, // Add padding for fixed header
+            p: { xs: 0.5, sm: 2, md: 3 },
+            pt: { xs: '72px', sm: '88px', md: '96px' }, // Add padding for fixed header
           }}
         >
           <GameBoard

@@ -14,8 +14,8 @@ export function GamePiece({ color, row, isWinningPiece = false, isNew = false }:
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   
   // Responsive cell height based on screen size
-  const cellHeight = isXs ? 45 : isSm ? 60 : 70;
-  const gapSize = isXs ? 5 : 8;
+  const cellHeight = isXs ? 42 : isSm ? 60 : 70;
+  const gapSize = isXs ? 4 : isSm ? 6 : 8;
   
   // Calculate drop distance from top of board (all rows above + gaps + extra for above board)
   const dropDistance = (row * (cellHeight + gapSize)) + (cellHeight * 2) + 100;

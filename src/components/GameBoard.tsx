@@ -50,7 +50,10 @@ export function GameBoard({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 2,
+        gap: { xs: 1, md: 2 },
+        width: '100%',
+        maxWidth: '100vw',
+        px: { xs: 1, sm: 2, md: 0 },
       }}
     >
       {/* Current Player Indicator */}
@@ -101,12 +104,12 @@ export function GameBoard({
         sx={{
           display: 'grid',
           gridTemplateColumns: {
-            xs: `repeat(${COLS}, 45px)`,
+            xs: `repeat(${COLS}, min(12vw, 42px))`,
             sm: `repeat(${COLS}, 60px)`,
             md: `repeat(${COLS}, 70px)`,
           },
-          gap: { xs: '5px', md: '8px' },
-          height: { xs: '45px', sm: '60px', md: '70px' },
+          gap: { xs: '4px', sm: '6px', md: '8px' },
+          height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
           mb: -1,
         }}
       >
@@ -131,8 +134,8 @@ export function GameBoard({
                   >
                     <Box
                       sx={{
-                        width: { xs: 35, sm: 45, md: 50 },
-                        height: { xs: 35, sm: 45, md: 50 },
+                        width: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
+                        height: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
                         borderRadius: '50%',
                         background: players[currentPlayer - 1].color,
                         opacity: 0.7,
@@ -157,17 +160,17 @@ export function GameBoard({
           sx={{
             display: 'grid',
             gridTemplateColumns: {
-              xs: `repeat(${COLS}, 45px)`,
+              xs: `repeat(${COLS}, min(12vw, 42px))`,
               sm: `repeat(${COLS}, 60px)`,
               md: `repeat(${COLS}, 70px)`,
             },
             gridTemplateRows: {
-              xs: `repeat(${ROWS}, 45px)`,
+              xs: `repeat(${ROWS}, min(12vw, 42px))`,
               sm: `repeat(${ROWS}, 60px)`,
               md: `repeat(${ROWS}, 70px)`,
             },
-            gap: { xs: '5px', md: '8px' },
-            p: { xs: 2, md: 3 },
+            gap: { xs: '4px', sm: '6px', md: '8px' },
+            p: { xs: 1.5, sm: 2, md: 3 },
             background: 'linear-gradient(145deg, #1E3A8A, #1E40AF, #2563EB)',
             borderRadius: 4,
             boxShadow: `
@@ -204,8 +207,8 @@ export function GameBoard({
               >
                 <Box
                   sx={{
-                    width: { xs: '45px', sm: '60px', md: '70px' },
-                    height: { xs: '45px', sm: '60px', md: '70px' },
+                    width: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
+                    height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
                     borderRadius: '50%',
                     background: 'linear-gradient(180deg, #0F172A, #1E293B)',
                     boxShadow: `

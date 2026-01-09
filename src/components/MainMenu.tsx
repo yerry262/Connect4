@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -16,15 +16,11 @@ import {
   FormControlLabel,
   Slider,
   Dialog,
-  Chip,
-  Avatar,
-  Tooltip,
 } from '@mui/material';
 import { PlayArrow, Person, Computer, Public, Timer } from '@mui/icons-material';
 import { DEFAULT_COLORS } from '../types';
 import type { AIDifficulty, GameMode, Player } from '../types';
 import { OnlineDashboard } from './OnlineDashboard';
-import { onlineManager } from '../utils/onlineManager';
 
 interface MainMenuProps {
   onStartGame: (
@@ -47,23 +43,6 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timePerTurn, setTimePerTurn] = useState(30);
   const [showOnlineDashboard, setShowOnlineDashboard] = useState(false);
-  
-  // Get current user info for display
-  const currentUser = onlineManager.getCurrentUser();
-  const [username, setUsername] = useState(currentUser?.username || 'Guest');
-  const [avatarColor, setAvatarColor] = useState(currentUser?.avatarColor || '#4ECDC4');
-
-  // Subscribe to user updates
-  useEffect(() => {
-    const unsubscribe = onlineManager.subscribe(() => {
-      const user = onlineManager.getCurrentUser();
-      if (user) {
-        setUsername(user.username);
-        setAvatarColor(user.avatarColor);
-      }
-    });
-    return unsubscribe;
-  }, []);
 
   const handleStartGame = () => {
     if (gameMode === 'online') {
