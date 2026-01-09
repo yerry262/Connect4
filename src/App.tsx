@@ -8,6 +8,7 @@ import {
   MainMenu,
   WinCelebration,
   OnlineGame,
+  Header,
 } from './components';
 import { useConnect4 } from './hooks';
 import { DEFAULT_COLORS } from './types';
@@ -117,6 +118,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AnimatedBackground />
+      <Header showMenu={appScreen === 'game'} onMenuClick={handleExit} />
 
       {appScreen === 'menu' && (
         <MainMenu 
@@ -140,7 +142,8 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '100vh',
-            p: 3,
+            p: { xs: 2, md: 3 },
+            pt: { xs: '80px', md: '96px' }, // Add padding for fixed header
           }}
         >
           <GameBoard

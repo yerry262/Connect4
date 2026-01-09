@@ -91,50 +91,11 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        p: 3,
+        p: { xs: 2, md: 3 },
+        pt: { xs: '80px', md: '96px' }, // Add padding for fixed header
         position: 'relative',
       }}
     >
-      {/* User Profile Badge - Top Right */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        style={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-        }}
-      >
-        <Tooltip title="Your Profile - Click Online PvP to manage">
-          <Chip
-            avatar={
-              <Avatar sx={{ bgcolor: avatarColor }}>
-                {username.charAt(0).toUpperCase()}
-              </Avatar>
-            }
-            label={username}
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              color: 'white',
-              border: '1px solid rgba(255,255,255,0.2)',
-              py: 2.5,
-              px: 1,
-              fontSize: '0.95rem',
-              '& .MuiChip-avatar': {
-                width: 32,
-                height: 32,
-              },
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.15)',
-              },
-            }}
-            onClick={() => setShowOnlineDashboard(true)}
-          />
-        </Tooltip>
-      </motion.div>
-
       <Dialog 
         open={showOnlineDashboard} 
         onClose={() => setShowOnlineDashboard(false)}
@@ -158,7 +119,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         <Typography
           variant="h1"
           sx={{
-            fontSize: { xs: '3rem', md: '5rem' },
+            fontSize: { xs: '2.5rem', sm: '3.5rem', md: '5rem' },
             fontWeight: 900,
             textAlign: 'center',
             background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #6C5CE7)',
@@ -193,7 +154,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         <Paper
           elevation={24}
           sx={{
-            p: 4,
+            p: { xs: 3, md: 4 },
             borderRadius: 4,
             background: 'rgba(255,255,255,0.1)',
             backdropFilter: 'blur(20px)',

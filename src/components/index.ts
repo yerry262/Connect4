@@ -7,4 +7,5 @@ export { MainMenu } from './MainMenu';
 export { WinCelebration } from './WinCelebration';
 export { OnlineGame } from './OnlineGame';
 export { OnlineDashboard } from './OnlineDashboard';
+export { Header } from './Header';
 export { default as Confetti } from './Confetti';
