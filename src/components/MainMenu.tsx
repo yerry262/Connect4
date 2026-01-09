@@ -224,6 +224,10 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
                   background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)',
                   color: 'white',
                 },
+                '&.Mui-disabled': {
+                  color: 'rgba(255,255,255,0.3)',
+                  opacity: 0.5,
+                },
               },
             }}
           >
@@ -233,7 +237,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
             <ToggleButton value="1vPC">
               <Computer sx={{ mr: 1 }} /> vs Computer
             </ToggleButton>
-            <ToggleButton value="online">
+            <ToggleButton value="online" disabled>
               <Public sx={{ mr: 1 }} /> Online PvP
             </ToggleButton>
           </ToggleButtonGroup>
