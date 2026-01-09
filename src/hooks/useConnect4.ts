@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   COLS,
-  createEmptyBoard,
   ROWS,
   WINNING_LENGTH,
   createInitialState,
