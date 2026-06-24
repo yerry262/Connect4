@@ -50,7 +50,10 @@ export function GameBoard({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 2,
+        gap: { xs: 1, md: 2 },
+        width: '100%',
+        maxWidth: '100vw',
+        px: { xs: 1, sm: 2, md: 0 },
       }}
     >
       {/* Current Player Indicator */}
@@ -64,9 +67,9 @@ export function GameBoard({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
-            px: 4,
-            py: 2,
+            gap: { xs: 1, md: 2 },
+            px: { xs: 2, md: 4 },
+            py: { xs: 1.5, md: 2 },
             borderRadius: 4,
             background: 'rgba(255,255,255,0.1)',
             backdropFilter: 'blur(10px)',
@@ -75,8 +78,8 @@ export function GameBoard({
         >
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: { xs: 30, md: 40 },
+              height: { xs: 30, md: 40 },
               borderRadius: '50%',
               background: `radial-gradient(circle at 30% 30%, ${players[currentPlayer - 1].color}, ${players[currentPlayer - 1].color}99)`,
               boxShadow: `0 0 15px ${players[currentPlayer - 1].color}`,
@@ -88,6 +91,7 @@ export function GameBoard({
               color: 'white',
               fontWeight: 'bold',
               textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+              fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
             }}
           >
             {players[currentPlayer - 1].name}'s Turn
@@ -99,9 +103,13 @@ export function GameBoard({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${COLS}, 70px)`,
-          gap: '8px',
-          height: '70px',
+          gridTemplateColumns: {
+            xs: `repeat(${COLS}, min(12vw, 42px))`,
+            sm: `repeat(${COLS}, 60px)`,
+            md: `repeat(${COLS}, 70px)`,
+          },
+          gap: { xs: '4px', sm: '6px', md: '8px' },
+          height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
           mb: -1,
         }}
       >
@@ -126,8 +134,8 @@ export function GameBoard({
                   >
                     <Box
                       sx={{
-                        width: 50,
-                        height: 50,
+                        width: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
+                        height: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
                         borderRadius: '50%',
                         background: players[currentPlayer - 1].color,
                         opacity: 0.7,
@@ -151,10 +159,18 @@ export function GameBoard({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: `repeat(${COLS}, 70px)`,
-            gridTemplateRows: `repeat(${ROWS}, 70px)`,
-            gap: '8px',
-            p: 3,
+            gridTemplateColumns: {
+              xs: `repeat(${COLS}, min(12vw, 42px))`,
+              sm: `repeat(${COLS}, 60px)`,
+              md: `repeat(${COLS}, 70px)`,
+            },
+            gridTemplateRows: {
+              xs: `repeat(${ROWS}, min(12vw, 42px))`,
+              sm: `repeat(${ROWS}, 60px)`,
+              md: `repeat(${ROWS}, 70px)`,
+            },
+            gap: { xs: '4px', sm: '6px', md: '8px' },
+            p: { xs: 1.5, sm: 2, md: 3 },
             background: 'linear-gradient(145deg, #1E3A8A, #1E40AF, #2563EB)',
             borderRadius: 4,
             boxShadow: `
@@ -162,7 +178,7 @@ export function GameBoard({
               inset 0 2px 0 rgba(255,255,255,0.1),
               inset 0 -2px 0 rgba(0,0,0,0.2)
             `,
-            border: '4px solid #3B82F6',
+            border: { xs: '3px solid #3B82F6', md: '4px solid #3B82F6' },
             position: 'relative',
             '&::before': {
               content: '""',
@@ -186,15 +202,13 @@ export function GameBoard({
                 onMouseEnter={() => setHoveredColumn(colIndex)}
                 onMouseLeave={() => setHoveredColumn(null)}
                 style={{
-                  width: '70px',
-                  height: '70px',
                   cursor: canDropInColumn(colIndex) && !winner ? 'pointer' : 'default',
                 }}
               >
                 <Box
                   sx={{
-                    width: '100%',
-                    height: '100%',
+                    width: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
+                    height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
                     borderRadius: '50%',
                     background: 'linear-gradient(180deg, #0F172A, #1E293B)',
                     boxShadow: `
@@ -230,8 +244,8 @@ export function GameBoard({
       <Box
         sx={{
           width: '100%',
-          maxWidth: 600,
-          height: 30,
+          maxWidth: { xs: 350, sm: 450, md: 600 },
+          height: { xs: 20, md: 30 },
           background: 'linear-gradient(180deg, #1E40AF, #1E3A8A)',
           borderRadius: '0 0 20px 20px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.3)',

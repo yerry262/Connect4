@@ -11,6 +11,7 @@ describe('GameControls Component', () => {
     onReset: vi.fn(),
     onExit: vi.fn(),
     onUndo: vi.fn(),
+    onEndGame: vi.fn(),
     canUndo: true,
   };
 

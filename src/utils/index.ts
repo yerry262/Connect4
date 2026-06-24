@@ -1,4 +1,4 @@
 export * from './ai';
 export * from './usernameGenerator';
-export { OnlineGameManager, getOnlineManager } from './onlineManager';
+export { onlineManager } from './onlineManager';
 export { soundManager } from './soundManager';

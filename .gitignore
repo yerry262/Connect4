@@ -15,8 +15,12 @@ node_modules/
 # Testing
 /coverage
 
-# Production
+# Production build output
 /build
+/dist
+
+# Vite cache
+.vite/
 
 # Misc
 .DS_Store

@@ -34,7 +34,7 @@ interface MainMenuProps {
 }
 
 export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
-  const [gameMode, setGameMode] = useState<GameMode>('1v1');
+  const [gameMode, setGameMode] = useState<GameMode>('1vPC');
   const [player1Name, setPlayer1Name] = useState('Player 1');
   const [player2Name, setPlayer2Name] = useState('Player 2');
   const [player1Color, setPlayer1Color] = useState(DEFAULT_COLORS.player1[0]);
@@ -70,7 +70,9 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        p: 3,
+        p: { xs: 2, md: 3 },
+        pt: { xs: '80px', md: '96px' }, // Add padding for fixed header
+        position: 'relative',
       }}
     >
       <Dialog 
@@ -96,7 +98,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         <Typography
           variant="h1"
           sx={{
-            fontSize: { xs: '3rem', md: '5rem' },
+            fontSize: { xs: '2.5rem', sm: '3.5rem', md: '5rem' },
             fontWeight: 900,
             textAlign: 'center',
             background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #6C5CE7)',
@@ -131,7 +133,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
         <Paper
           elevation={24}
           sx={{
-            p: 4,
+            p: { xs: 3, md: 4 },
             borderRadius: 4,
             background: 'rgba(255,255,255,0.1)',
             backdropFilter: 'blur(20px)',
@@ -162,6 +164,10 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
                   background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)',
                   color: 'white',
                 },
+                '&.Mui-disabled': {
+                  color: 'rgba(255,255,255,0.3)',
+                  opacity: 0.5,
+                },
               },
             }}
           >
@@ -171,7 +177,7 @@ export function MainMenu({ onStartGame, onStartOnlineGame }: MainMenuProps) {
             <ToggleButton value="1vPC">
               <Computer sx={{ mr: 1 }} /> vs Computer
             </ToggleButton>
-            <ToggleButton value="online">
+            <ToggleButton value="online" disabled>
               <Public sx={{ mr: 1 }} /> Online PvP
             </ToggleButton>
           </ToggleButtonGroup>

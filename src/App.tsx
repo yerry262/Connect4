@@ -8,6 +8,7 @@ import {
   MainMenu,
   WinCelebration,
   OnlineGame,
+  Header,
 } from './components';
 import { useConnect4 } from './hooks';
 import { DEFAULT_COLORS } from './types';
@@ -32,6 +33,8 @@ const theme = createTheme({
 type AppScreen = 'menu' | 'game' | 'online-game';
 
 function App() {
+  console.log('App component rendering...');
+  
   const [appScreen, setAppScreen] = useState<AppScreen>('menu');
   const [onlineGameId, setOnlineGameId] = useState<string | null>(null);
   const [players, setPlayers] = useState<[Player, Player]>([
@@ -115,6 +118,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AnimatedBackground />
+      <Header showMenu={appScreen === 'game'} onMenuClick={handleExit} />
 
       {appScreen === 'menu' && (
         <MainMenu 
@@ -138,7 +142,8 @@ function App() {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '100vh',
-            p: 3,
+            p: { xs: 0.5, sm: 2, md: 3 },
+            pt: { xs: '72px', sm: '88px', md: '96px' }, // Add padding for fixed header
           }}
         >
           <GameBoard

@@ -10,7 +10,7 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
 
 - **Main Menu**
   - Game title with gradient animation
-  - Game mode selection (1v1 Human vs Human)
+  - Game mode selection (1v1, vs Computer, Online PvP)
   - Player name customization
   - Color picker with 5 vibrant color options per player
   - Beautiful glassmorphism UI design
@@ -30,11 +30,18 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
   - Gravity physics - pieces fall to lowest available row
   - Move history tracking
 
+- **1 vs Computer Mode**
+  - AI opponent with 3 difficulty levels
+  - Easy: Random valid moves
+  - Medium: Strategic blocking and basic tactics
+  - Hard: Minimax algorithm with alpha-beta pruning
+
 - **Game Controls**
   - Pause/Resume functionality with overlay
   - Undo last move
   - Reset game with confirmation dialog
   - Exit to menu with confirmation dialog
+  - Timer per turn (optional, 5-60 seconds)
 
 - **Game Over**
   - Winner announcement with confetti celebration
@@ -49,6 +56,41 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
   - Glassmorphism UI components
   - Responsive design
 
+- **Online PvP Mode** 🆕
+  - Full online multiplayer dashboard
+  - Player profiles with customizable avatars and bios
+  - Friend system with friend requests (send/accept/decline)
+  - Game challenges with optional messages
+  - Turn-based asynchronous gameplay
+  - Your turn notifications and badges
+
+- **Social Features** 🆕
+  - User search to find and add friends
+  - Friend list with online status indicators
+  - Head-to-head statistics against each opponent
+  - Challenge friends with custom messages
+  - View any player's profile and stats
+
+- **Player Statistics & Scoring** 🆕
+  - Comprehensive stats tracking (wins, losses, draws, games played)
+  - Score system: +100 for wins, +25 for draws, -10 for losses
+  - Win streak tracking (current and best)
+  - Rank system: Bronze → Silver → Gold → Platinum → Diamond → Master → Grandmaster
+  - Game history with score changes
+
+- **Leaderboards** 🆕
+  - Global leaderboards with all players
+  - Friends-only leaderboard
+  - Sort by: Score, Wins, Games Played, Win Ratio
+  - Visual rank badges and indicators
+  - Highlight your position and friends
+
+- **Data Persistence** 🆕
+  - All game data saved to localStorage
+  - Profile settings persist across sessions
+  - Friend lists and game history preserved
+  - Automatic data migration for updates
+
 - **Testing**
   - 61 unit and integration tests passing
   - Game logic tests (win detection, gravity, board state)
@@ -57,10 +99,15 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
 
 ### 🚧 TODO / Coming Soon
 
-- **1 vs Computer Mode** (Scheduled for next week)
-  - AI opponent with difficulty levels
-  - Minimax algorithm with alpha-beta pruning
-  - Currently disabled in UI with "Coming Soon" label
+- **Real-time Multiplayer**
+  - WebSocket/Firebase integration for live games
+  - Real-time opponent moves without refresh
+  - Online presence indicators (actual real-time status)
+
+- **Push Notifications**
+  - Browser notifications for game invites
+  - Notify when it's your turn
+  - Friend request notifications
 
 - **Sound Effects**
   - Piece drop sound
@@ -69,14 +116,16 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
   - Background music (optional)
 
 - **Additional Features to Consider**
-  - Game statistics tracking
-  - Local storage for saving games
-  - Online multiplayer
-  - Tournament mode
-  - Custom board sizes
+  - Tournament/bracket mode
+  - Custom board sizes (8x8, 5x5, etc.)
   - Accessibility improvements (keyboard navigation, screen reader support)
   - Mobile-optimized touch controls
   - Theme customization (dark/light/custom)
+  - Chat system for online games
+  - Spectator mode for watching live games
+  - Replay system for past games
+  - Achievements and badges
+  - Seasonal rankings and rewards
 
 ## 🛠️ Tech Stack
 
@@ -99,13 +148,23 @@ src/
 │   ├── GameOverModal.tsx       # Winner/draw announcement modal
 │   ├── GamePiece.tsx           # Animated circular game pieces
 │   ├── MainMenu.tsx            # Start screen with settings
+│   ├── OnlineDashboard.tsx     # Online PvP hub with friends, leaderboards
+│   ├── OnlineGame.tsx          # Online game view with player cards
+│   ├── WinCelebration.tsx      # Victory celebration animation
 │   └── index.ts                # Component exports
 ├── hooks/
 │   ├── useConnect4.ts          # Game state management hook
 │   └── index.ts                # Hook exports
 ├── types/
-│   ├── game.ts                 # TypeScript interfaces and constants
+│   ├── game.ts                 # Game TypeScript interfaces
+│   ├── online.ts               # Online/social TypeScript interfaces
 │   └── index.ts                # Type exports
+├── utils/
+│   ├── ai.ts                   # AI opponent logic (minimax)
+│   ├── onlineManager.ts        # Online data manager (friends, games, stats)
+│   ├── soundManager.ts         # Sound effects handler
+│   ├── storageManager.ts       # Local storage utilities
+│   └── usernameGenerator.ts    # Random username generator
 ├── test/
 │   ├── setup.ts                # Test configuration
 │   ├── gameLogic.test.ts       # Game logic unit tests
@@ -113,7 +172,8 @@ src/
 │   ├── MainMenu.test.tsx       # MainMenu component tests
 │   ├── GameBoard.test.tsx      # GameBoard component tests
 │   ├── GameControls.test.tsx   # GameControls component tests
-│   └── GameOverModal.test.tsx  # GameOverModal component tests
+│   ├── GameOverModal.test.tsx  # GameOverModal component tests
+│   └── storageManager.test.ts  # Storage manager tests
 ├── App.tsx                     # Main app component
 ├── App.css                     # App styles (minimal)
 ├── index.css                   # Global styles
