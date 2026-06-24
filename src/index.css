@@ -73,3 +73,19 @@ button {
   background: #6C5CE7;
   color: white;
 }
+
+/*
+ * Honour the OS "reduce motion" setting. In-car browsers (e.g. Tesla) and
+ * accessibility users benefit from minimising non-essential animation; the
+ * canvas-based effects opt out in JS, this tames CSS/MUI transitions.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

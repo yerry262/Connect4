@@ -56,6 +56,19 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
   - Glassmorphism UI components
   - Responsive design
 
+- **Performance & In-Car (Tesla) Optimizations** 🚗
+  - Auto-detects Tesla / low-power browsers and `prefers-reduced-motion`,
+    then scales animations down (`src/utils/performance.ts`)
+  - Particle background: capped particle count, cached glow sprites (no
+    per-frame gradient allocation), spatial-grid connection lines (~O(n)
+    instead of O(n²)), capped device-pixel-ratio, and 30 FPS throttling on
+    constrained devices
+  - Canvas loops pause when the tab/app is backgrounded; confetti auto-stops
+    instead of looping forever
+  - Reduced-motion users get static (non-looping) win celebrations
+  - Force the low-power path on any device for testing with `?tesla` or
+    `?lowpower=1` in the URL
+
 - **Online PvP Mode** 🆕
   - Full online multiplayer dashboard
   - Player profiles with customizable avatars and bios

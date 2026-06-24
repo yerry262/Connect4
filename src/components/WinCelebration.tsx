@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 import { Typography, Box } from '@mui/material';
+import { isLowPowerDevice, prefersReducedMotion } from '../utils/performance';
 
 export function WinCelebration() {
+  // On low-power / reduced-motion devices, show the banner statically instead
+  // of looping a scale+rotate animation forever (which never idles the CPU).
+  const staticDisplay = isLowPowerDevice() || prefersReducedMotion();
+
   return (
     <Box
       sx={{
@@ -15,17 +20,25 @@ export function WinCelebration() {
       }}
     >
       <motion.div
-        initial={{ scale: 0, opacity: 0, rotate: -10 }}
-        animate={{ 
-          scale: [1, 1.2, 1], 
-          opacity: 1,
-          rotate: [0, 5, -5, 0],
-        }}
-        transition={{
-          duration: 0.8,
-          repeat: Infinity,
-          repeatType: 'reverse',
-        }}
+        initial={staticDisplay ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0, rotate: -10 }}
+        animate={
+          staticDisplay
+            ? { scale: 1, opacity: 1 }
+            : {
+                scale: [1, 1.2, 1],
+                opacity: 1,
+                rotate: [0, 5, -5, 0],
+              }
+        }
+        transition={
+          staticDisplay
+            ? { duration: 0.3 }
+            : {
+                duration: 0.8,
+                repeat: Infinity,
+                repeatType: 'reverse',
+              }
+        }
       >
         <Typography
           variant="h1"

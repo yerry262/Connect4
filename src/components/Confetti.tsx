@@ -1,4 +1,9 @@
 import { useEffect, useRef } from 'react';
+import {
+  getRenderScale,
+  isLowPowerDevice,
+  prefersReducedMotion,
+} from '../utils/performance';
 
 interface ConfettiPiece {
   x: number;
@@ -27,29 +32,41 @@ const CONFETTI_COLORS = [
   '#00BCD4',
 ];
 
+// Confetti is purely decorative, so it auto-stops after this long to free the
+// CPU/GPU (the original looped forever, recycling pieces indefinitely).
+const CONFETTI_DURATION_MS = 6000;
+
 export default function Confetti() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<ConfettiPiece[]>([]);
   const animationRef = useRef<number>(0);
 
   useEffect(() => {
+    // Respect reduced motion (and our low-power override) by skipping the
+    // animation entirely. This component renders nothing in that case.
+    if (prefersReducedMotion()) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const scale = getRenderScale();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    canvas.width = Math.floor(width * scale);
+    canvas.height = Math.floor(height * scale);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-    // Initialize confetti
+    const lowPower = isLowPowerDevice();
+    const numConfetti = lowPower ? 60 : 150;
+
     const confetti: ConfettiPiece[] = [];
-    const numConfetti = 150;
-
     for (let i = 0; i < numConfetti; i++) {
       confetti.push({
-        x: Math.random() * canvas.width,
-        y: -Math.random() * canvas.height,
+        x: Math.random() * width,
+        y: -Math.random() * height,
         vx: (Math.random() - 0.5) * 4,
         vy: Math.random() * 3 + 2,
         color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
@@ -59,49 +76,71 @@ export default function Confetti() {
         height: Math.random() * 15 + 8,
       });
     }
-
     confettiRef.current = confetti;
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let running = true;
+    const startTime = performance.now();
 
+    const animate = (now: number) => {
+      if (!running) return;
+
+      // Stop recycling pieces once the celebration window has elapsed.
+      const elapsed = now - startTime;
+      const finished = elapsed > CONFETTI_DURATION_MS;
+
+      ctx.clearRect(0, 0, width, height);
+
+      let visible = 0;
       confettiRef.current.forEach((piece) => {
         piece.x += piece.vx;
         piece.y += piece.vy;
         piece.vy += 0.05; // Gravity
         piece.rotation += piece.rotationSpeed;
         piece.vx *= 0.99; // Air resistance
+        piece.vx += (Math.random() - 0.5) * 0.1; // Wind
 
-        // Wind effect
-        piece.vx += (Math.random() - 0.5) * 0.1;
-
-        // Reset if off screen
-        if (piece.y > canvas.height) {
+        if (piece.y > height) {
+          if (finished) return; // let it fall off-screen and disappear
           piece.y = -20;
-          piece.x = Math.random() * canvas.width;
+          piece.x = Math.random() * width;
           piece.vy = Math.random() * 3 + 2;
         }
 
-        // Draw confetti piece
+        if (piece.y <= height) visible++;
+
         ctx.save();
         ctx.translate(piece.x, piece.y);
         ctx.rotate((piece.rotation * Math.PI) / 180);
         ctx.fillStyle = piece.color;
-        ctx.fillRect(
-          -piece.width / 2,
-          -piece.height / 2,
-          piece.width,
-          piece.height
-        );
+        ctx.fillRect(-piece.width / 2, -piece.height / 2, piece.width, piece.height);
         ctx.restore();
       });
+
+      if (finished && visible === 0) {
+        running = false;
+        ctx.clearRect(0, 0, width, height);
+        return;
+      }
 
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    const handleVisibility = () => {
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(animationRef.current);
+      } else if (performance.now() - startTime <= CONFETTI_DURATION_MS) {
+        running = true;
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
+      running = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animationRef.current);
     };
   }, []);

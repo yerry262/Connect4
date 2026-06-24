@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { isLowPowerDevice, prefersReducedMotion } from '../utils/performance';
 
 interface GamePieceProps {
   color: string;
@@ -12,11 +13,16 @@ export function GamePiece({ color, row, isWinningPiece = false, isNew = false }:
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down('sm'));
   const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  
+
+  // On constrained devices, drop the infinite winning-piece pulse so the
+  // board doesn't animate forever after a win.
+  const reduceMotion = isLowPowerDevice() || prefersReducedMotion();
+  const pulse = isWinningPiece && !reduceMotion;
+
   // Responsive cell height based on screen size
   const cellHeight = isXs ? 42 : isSm ? 60 : 70;
   const gapSize = isXs ? 4 : isSm ? 6 : 8;
-  
+
   // Calculate drop distance from top of board (all rows above + gaps + extra for above board)
   const dropDistance = (row * (cellHeight + gapSize)) + (cellHeight * 2) + 100;
 
@@ -25,7 +31,7 @@ export function GamePiece({ color, row, isWinningPiece = false, isNew = false }:
       initial={isNew ? { y: -dropDistance, scale: 0.8 } : { y: 0, scale: 1 }}
       animate={{
         y: 0,
-        scale: isWinningPiece ? [1, 1.1, 1] : 1,
+        scale: pulse ? [1, 1.1, 1] : 1,
       }}
       transition={
         isNew
@@ -35,7 +41,7 @@ export function GamePiece({ color, row, isWinningPiece = false, isNew = false }:
               damping: 20,
               mass: 1,
             }
-          : isWinningPiece
+          : pulse
           ? {
               scale: {
                 duration: 0.5,
