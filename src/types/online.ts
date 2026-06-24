@@ -1,3 +1,5 @@
+import { Player } from './game';
+
 // Player statistics tracking
 export interface PlayerStats {
   gamesPlayed: number;
@@ -120,4 +122,15 @@ export interface FriendRequestDisplay {
   createdAt: string;
   message?: string;
   isIncoming: boolean;
+}
+
+// Notification types for social features
+export interface SocialNotification {
+  id: string;
+  type: 'friend_request' | 'challenge' | 'game_turn' | 'game_won' | 'game_lost' | 'friend_online';
+  message: string;
+  fromUserId?: string;
+  relatedId?: string; // gameId, challengeId, or requestId
+  createdAt: string;
+  read: boolean;
 }
