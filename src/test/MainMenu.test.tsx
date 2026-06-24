@@ -23,6 +23,10 @@ describe('MainMenu Component', () => {
     const mockStartGame = vi.fn();
     render(<MainMenu onStartGame={mockStartGame} />);
 
+    // Switch to local 1 vs 1 so both human players are shown (the default
+    // mode is now vs Computer, where Player 2 is the AI).
+    fireEvent.click(screen.getByRole('button', { name: /1 vs 1/i }));
+
     expect(screen.getByText('Player 1')).toBeInTheDocument();
     expect(screen.getByText('Player 2')).toBeInTheDocument();
   });
@@ -37,6 +41,8 @@ describe('MainMenu Component', () => {
   it('should call onStartGame when start button is clicked', () => {
     const mockStartGame = vi.fn();
     render(<MainMenu onStartGame={mockStartGame} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /1 vs 1/i }));
 
     const startButton = screen.getByRole('button', { name: /start game/i });
     fireEvent.click(startButton);
@@ -57,6 +63,8 @@ describe('MainMenu Component', () => {
   it('should update player name when typing', () => {
     const mockStartGame = vi.fn();
     render(<MainMenu onStartGame={mockStartGame} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /1 vs 1/i }));
 
     const inputs = screen.getAllByPlaceholderText('Enter name');
     fireEvent.change(inputs[0], { target: { value: 'Alice' } });
