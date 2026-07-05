@@ -1,5 +1,3 @@
-import { Player } from './game';
-
 // Player statistics tracking
 export interface PlayerStats {
   gamesPlayed: number;
