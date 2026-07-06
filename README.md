@@ -2,7 +2,11 @@
 
 A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, and Framer Motion. Features beautiful animations, an interactive particle background, and a polished UI suitable for kids and adults alike.
 
-![Connect 4](https://img.shields.io/badge/React-19.2-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Vite](https://img.shields.io/badge/Vite-7.2-purple) ![Tests](https://img.shields.io/badge/Tests-61%20passing-green)
+![Connect 4](https://img.shields.io/badge/React-19.2-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Vite](https://img.shields.io/badge/Vite-7.2-purple) ![Tests](https://img.shields.io/badge/Tests-passing-green)
+
+## 🌐 Live Demo
+
+**[https://yerry262.github.io/Connect4/](https://yerry262.github.io/Connect4/)**
 
 ## 🎯 Features
 
@@ -105,7 +109,7 @@ A modern, interactive Connect 4 game built with React, TypeScript, Material-UI, 
   - Automatic data migration for updates
 
 - **Testing**
-  - 61 unit and integration tests passing
+  - Comprehensive unit and integration test suite
   - Game logic tests (win detection, gravity, board state)
   - Component tests (MainMenu, GameBoard, GameControls, GameOverModal)
   - Hook integration tests
@@ -249,15 +253,16 @@ npm run build
 
 ## 🤝 Contributing
 
-### Adding the AI Opponent
+### Tuning the AI Opponent
 
-The AI implementation should:
-1. Create a new hook `useAI.ts` or extend `useConnect4.ts`
-2. Implement minimax algorithm with alpha-beta pruning
-3. Add difficulty levels (Easy, Medium, Hard)
-4. Easy: Random valid moves
-5. Medium: Block obvious wins, simple heuristics
-6. Hard: Full minimax with depth 6-8
+The AI opponent is already implemented in `src/utils/ai.ts` using a minimax
+algorithm with alpha-beta pruning and three difficulty levels:
+
+- **Easy**: Mostly random valid moves
+- **Medium**: Blocks obvious wins with shallow lookahead
+- **Hard**: Full minimax search
+
+To tune the AI, adjust the heuristics and search depth in `src/utils/ai.ts`.
 
 ### Code Style
 
