@@ -132,6 +132,7 @@ export function AnimatedBackground() {
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < 150 && distance > 0) {
           const force = (150 - distance) / 150;
+          // eslint-disable-next-line react-hooks/immutability -- runs inside the rAF-driven drawFrame loop, not render; mutating particlesRef in place avoids a full-array reallocation every frame
           particle.vx += (dx / distance) * force * 0.2;
           particle.vy += (dy / distance) * force * 0.2;
         }

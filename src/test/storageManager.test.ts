@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { storageManager } from '../utils/storageManager';
 import { createInitialState } from '../types';
+import type { Player } from '../types';
 
 describe('storageManager', () => {
   beforeEach(() => {
@@ -9,7 +10,10 @@ describe('storageManager', () => {
   });
 
   it('should save and load game state', () => {
-    const players: any = [{ id: 1 }, { id: 2 }];
+    const players: [Player, Player] = [
+      { id: 1, name: 'Player 1', color: '#FF6B6B', isComputer: false },
+      { id: 2, name: 'Player 2', color: '#4ECDC4', isComputer: false },
+    ];
     const state = createInitialState(players, '1v1');
     
     storageManager.saveGameState(state);

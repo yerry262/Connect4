@@ -120,7 +120,7 @@ export function useConnect4(
   });
 
   const aiMoveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isProcessingMove = useRef(false);
+  const [isProcessingMove, setIsProcessingMove] = useState(false);
 
   useEffect(() => {
     if (gameState.screen === 'playing' || gameState.screen === 'paused') {
@@ -131,7 +131,7 @@ export function useConnect4(
   }, [gameState]);
 
   useEffect(() => {
-    if (!gameState.timerEnabled || gameState.screen !== 'playing' || gameState.winner || gameState.isDraw || isProcessingMove.current) {
+    if (!gameState.timerEnabled || gameState.screen !== 'playing' || gameState.winner || gameState.isDraw || isProcessingMove) {
       return;
     }
 
@@ -152,7 +152,7 @@ export function useConnect4(
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState.timerEnabled, gameState.screen, gameState.winner, gameState.isDraw, gameState.currentPlayer]);
+  }, [gameState.timerEnabled, gameState.screen, gameState.winner, gameState.isDraw, gameState.currentPlayer, isProcessingMove]);
 
   const isAITurn = gameMode === '1vPC' &&
     gameState.currentPlayer === 2 &&
@@ -160,14 +160,14 @@ export function useConnect4(
     gameState.screen === 'playing' &&
     !gameState.winner &&
     !gameState.isDraw &&
-    !isProcessingMove.current;
+    !isProcessingMove;
 
   const canDropInColumn = useCallback(
     (col: number): boolean => {
-      if (gameState.winner || gameState.isDraw || isProcessingMove.current) return false;
+      if (gameState.winner || gameState.isDraw || isProcessingMove) return false;
       return gameState.board[0][col] === null;
     },
-    [gameState.board, gameState.winner, gameState.isDraw]
+    [gameState.board, gameState.winner, gameState.isDraw, isProcessingMove]
   );
 
   const dropPiece = useCallback(
@@ -178,7 +178,7 @@ export function useConnect4(
       const row = getLowestEmptyRow(gameState.board, col);
       if (row === -1) return null;
 
-      isProcessingMove.current = true;
+      setIsProcessingMove(true);
 
       const newBoard = cloneBoard(gameState.board);
       newBoard[row][col] = gameState.currentPlayer;
@@ -208,7 +208,7 @@ export function useConnect4(
             }
             return newState;
           });
-          isProcessingMove.current = false;
+          setIsProcessingMove(false);
         }, 2000);
       } else {
         setGameState((prev) => ({
@@ -218,7 +218,7 @@ export function useConnect4(
             currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
             timeLeft: prev.timePerTurn,
         }));
-        isProcessingMove.current = false;
+        setIsProcessingMove(false);
       }
 
       return { row, col };
@@ -229,7 +229,7 @@ export function useConnect4(
   const resetGame = useCallback(() => {
     storageManager.clearGameState();
     setGameState(createInitialState(players, gameMode, timerEnabled, timePerTurn));
-    isProcessingMove.current = false;
+    setIsProcessingMove(false);
   }, [players, gameMode, timerEnabled, timePerTurn]);
 
   const pauseGame = useCallback(() => {
@@ -274,7 +274,7 @@ export function useConnect4(
   }, []);
 
   const undoLastMove = useCallback(() => {
-    if (gameState.moveHistory.length === 0 || isProcessingMove.current) return;
+    if (gameState.moveHistory.length === 0 || isProcessingMove) return;
 
     const newHistory = [...gameState.moveHistory];
     const lastCol = newHistory.pop()!;
@@ -297,7 +297,7 @@ export function useConnect4(
       screen: 'playing',
       timeLeft: prev.timePerTurn,
     }));
-  }, [gameState.board, gameState.moveHistory]);
+  }, [gameState.board, gameState.moveHistory, isProcessingMove]);
 
   useEffect(() => {
     if (isAITurn) {
@@ -308,7 +308,7 @@ export function useConnect4(
         if (aiCol !== -1) {
           const row = getLowestEmptyRow(gameState.board, aiCol);
           if (row !== -1) {
-            isProcessingMove.current = true;
+            setIsProcessingMove(true);
             const newBoard = cloneBoard(gameState.board);
             newBoard[row][aiCol] = 2;
             
@@ -334,7 +334,7 @@ export function useConnect4(
                         else if (isDraw) storageManager.updateStats(null);
                         return newState;
                     });
-                    isProcessingMove.current = false;
+                    setIsProcessingMove(false);
                 }, 2000);
             } else {
                 setGameState(prev => ({
@@ -344,7 +344,7 @@ export function useConnect4(
                     currentPlayer: 1,
                     timeLeft: prev.timePerTurn
                 }));
-                isProcessingMove.current = false;
+                setIsProcessingMove(false);
             }
           }
         }

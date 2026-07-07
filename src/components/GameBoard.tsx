@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { COLS, ROWS } from '../types';
@@ -119,13 +119,18 @@ export function GameBoard({
   const cellHeight = isXs ? 42 : isSm ? 60 : 70;
   const gapSize = isXs ? 4 : isSm ? 6 : 8;
 
-  // Track when the board resets
-  useEffect(() => {
-    const isEmpty = board.every((row) => row.every((cell) => cell === null));
-    if (isEmpty) {
-      setBoardKey((prev) => prev + 1);
-    }
-  }, [board]);
+  // Bump boardKey on the render where the board transitions to empty (new
+  // game), so the piece-drop animations restart. Adjusted during render
+  // (React's documented pattern for deriving state from a prop change)
+  // rather than in an effect, so it lands in the same commit as the reset.
+  const [wasEmpty, setWasEmpty] = useState(false);
+  const isEmpty = board.every((row) => row.every((cell) => cell === null));
+  if (isEmpty && !wasEmpty) {
+    setWasEmpty(true);
+    setBoardKey((prev) => prev + 1);
+  } else if (!isEmpty && wasEmpty) {
+    setWasEmpty(false);
+  }
 
   // O(1) winning-cell lookups instead of scanning the winner line per cell.
   const winningCells = useMemo(() => {

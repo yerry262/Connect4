@@ -841,7 +841,7 @@ class OnlineManager {
     const currentUserId = this.data.currentUser;
     const currentUser = this.getCurrentUser();
 
-    let sorted = [...this.data.users];
+    const sorted = [...this.data.users];
 
     switch (sortBy) {
       case 'wins':
@@ -881,7 +881,7 @@ class OnlineManager {
     const friendsAndSelf = [currentUser.id, ...currentUser.friends];
     const friends = this.data.users.filter(u => friendsAndSelf.includes(u.id));
 
-    let sorted = [...friends];
+    const sorted = [...friends];
 
     switch (sortBy) {
       case 'wins':
