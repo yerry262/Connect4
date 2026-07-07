@@ -1,5 +1,6 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { Box } from '@mui/material';
 import { isLowPowerDevice, prefersReducedMotion } from '../utils/performance';
 
 interface GamePieceProps {
@@ -7,21 +8,23 @@ interface GamePieceProps {
   row: number;
   isWinningPiece?: boolean;
   isNew?: boolean;
+  /** Cell size / gap in px, computed once by the board (not per piece). */
+  cellHeight: number;
+  gapSize: number;
 }
 
-export function GamePiece({ color, row, isWinningPiece = false, isNew = false }: GamePieceProps) {
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
-  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-
+export const GamePiece = memo(function GamePiece({
+  color,
+  row,
+  isWinningPiece = false,
+  isNew = false,
+  cellHeight,
+  gapSize,
+}: GamePieceProps) {
   // On constrained devices, drop the infinite winning-piece pulse so the
   // board doesn't animate forever after a win.
   const reduceMotion = isLowPowerDevice() || prefersReducedMotion();
   const pulse = isWinningPiece && !reduceMotion;
-
-  // Responsive cell height based on screen size
-  const cellHeight = isXs ? 42 : isSm ? 60 : 70;
-  const gapSize = isXs ? 4 : isSm ? 6 : 8;
 
   // Calculate drop distance from top of board (all rows above + gaps + extra for above board)
   const dropDistance = (row * (cellHeight + gapSize)) + (cellHeight * 2) + 100;
@@ -85,23 +88,36 @@ export function GamePiece({ color, row, isWinningPiece = false, isNew = false }:
       />
     </motion.div>
   );
-}
+});
 
-// Utility functions to lighten/darken colors
+// Utility functions to lighten/darken colors. Results are memoized — the
+// same handful of player colours are recomputed for every piece otherwise.
+const colorCache = new Map<string, string>();
+
 function lightenColor(color: string, percent: number): string {
+  const key = `l${percent}:${color}`;
+  const cached = colorCache.get(key);
+  if (cached) return cached;
   const num = parseInt(color.replace('#', ''), 16);
   const amt = Math.round(2.55 * percent);
   const R = Math.min(255, (num >> 16) + amt);
   const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
   const B = Math.min(255, (num & 0x0000ff) + amt);
-  return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
+  const result = `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
+  colorCache.set(key, result);
+  return result;
 }
 
 function darkenColor(color: string, percent: number): string {
+  const key = `d${percent}:${color}`;
+  const cached = colorCache.get(key);
+  if (cached) return cached;
   const num = parseInt(color.replace('#', ''), 16);
   const amt = Math.round(2.55 * percent);
   const R = Math.max(0, (num >> 16) - amt);
   const G = Math.max(0, ((num >> 8) & 0x00ff) - amt);
   const B = Math.max(0, (num & 0x0000ff) - amt);
-  return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
+  const result = `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
+  colorCache.set(key, result);
+  return result;
 }
