@@ -2,6 +2,39 @@
 import type { AIDifficulty, Board, CellValue } from '../types';
 import { ROWS, COLS, WINNING_LENGTH } from '../types';
 
+// Column visit order for search: center-first ordering makes alpha-beta
+// pruning dramatically more effective (the best move is usually central).
+const ORDERED_COLS: number[] = Array.from({ length: COLS }, (_, i) => i).sort(
+  (a, b) => Math.abs(a - (COLS - 1) / 2) - Math.abs(b - (COLS - 1) / 2)
+);
+
+// Every possible 4-in-a-row window on the board, precomputed once as flat
+// [r0,c0, r1,c1, r2,c2, r3,c3] arrays so evaluation never allocates.
+const WINDOWS: number[][] = (() => {
+  const windows: number[][] = [];
+  const directions = [
+    { dRow: 0, dCol: 1 },
+    { dRow: 1, dCol: 0 },
+    { dRow: 1, dCol: 1 },
+    { dRow: 1, dCol: -1 },
+  ];
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      for (const { dRow, dCol } of directions) {
+        const endRow = row + (WINNING_LENGTH - 1) * dRow;
+        const endCol = col + (WINNING_LENGTH - 1) * dCol;
+        if (endRow < 0 || endRow >= ROWS || endCol < 0 || endCol >= COLS) continue;
+        const w: number[] = [];
+        for (let i = 0; i < WINNING_LENGTH; i++) {
+          w.push(row + i * dRow, col + i * dCol);
+        }
+        windows.push(w);
+      }
+    }
+  }
+  return windows;
+})();
+
 // Find the lowest empty row in a column
 function getLowestEmptyRow(board: Board, col: number): number {
   for (let row = ROWS - 1; row >= 0; row--) {
@@ -12,7 +45,7 @@ function getLowestEmptyRow(board: Board, col: number): number {
   return -1;
 }
 
-// Clone board for simulation
+// Clone board once per AI move; search then mutates the copy in place.
 function cloneBoard(board: Board): Board {
   return board.map((row) => [...row]);
 }
@@ -20,7 +53,7 @@ function cloneBoard(board: Board): Board {
 // Get valid columns (not full)
 function getValidColumns(board: Board): number[] {
   const validCols: number[] = [];
-  for (let col = 0; col < COLS; col++) {
+  for (const col of ORDERED_COLS) {
     if (board[0][col] === null) {
       validCols.push(col);
     }
@@ -28,47 +61,49 @@ function getValidColumns(board: Board): number[] {
   return validCols;
 }
 
-// Check for a win
-function checkWin(board: Board, player: CellValue): boolean {
+function isBoardFull(board: Board): boolean {
+  for (let col = 0; col < COLS; col++) {
+    if (board[0][col] === null) return false;
+  }
+  return true;
+}
+
+/**
+ * Did the piece just placed at (row, col) complete four in a row?
+ *
+ * Only lines passing through the last move can be new wins, so this checks
+ * 4 directions from one cell instead of rescanning the whole board — the
+ * hot path of the search.
+ */
+function isWinningMove(board: Board, row: number, col: number, player: CellValue): boolean {
   const directions = [
-    { dRow: 0, dCol: 1 },
-    { dRow: 1, dCol: 0 },
-    { dRow: 1, dCol: 1 },
-    { dRow: 1, dCol: -1 },
+    [0, 1],
+    [1, 0],
+    [1, 1],
+    [1, -1],
   ];
 
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      if (board[row][col] !== player) continue;
-
-      for (const { dRow, dCol } of directions) {
-        let count = 0;
-        for (let i = 0; i < WINNING_LENGTH; i++) {
-          const r = row + i * dRow;
-          const c = col + i * dCol;
-          if (r < 0 || r >= ROWS || c < 0 || c >= COLS) break;
-          if (board[r][c] === player) count++;
-          else break;
-        }
-        if (count === WINNING_LENGTH) return true;
-      }
+  for (const [dRow, dCol] of directions) {
+    let count = 1;
+    for (let i = 1; i < WINNING_LENGTH; i++) {
+      const r = row + i * dRow;
+      const c = col + i * dCol;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      count++;
     }
+    for (let i = 1; i < WINNING_LENGTH; i++) {
+      const r = row - i * dRow;
+      const c = col - i * dCol;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS || board[r][c] !== player) break;
+      count++;
+    }
+    if (count >= WINNING_LENGTH) return true;
   }
   return false;
 }
 
-// Simulate a move
-function makeMove(board: Board, col: number, player: CellValue): Board | null {
-  const row = getLowestEmptyRow(board, col);
-  if (row === -1) return null;
-  const newBoard = cloneBoard(board);
-  newBoard[row][col] = player;
-  return newBoard;
-}
-
-// Evaluate board position for a player
+// Evaluate board position for a player (allocation-free window counting)
 function evaluatePosition(board: Board, player: CellValue): number {
-  const opponent: CellValue = player === 1 ? 2 : 1;
   let score = 0;
 
   // Center column preference
@@ -77,47 +112,34 @@ function evaluatePosition(board: Board, player: CellValue): number {
     if (board[row][centerCol] === player) score += 3;
   }
 
-  // Evaluate all windows of 4
-  const directions = [
-    { dRow: 0, dCol: 1 },
-    { dRow: 1, dCol: 0 },
-    { dRow: 1, dCol: 1 },
-    { dRow: 1, dCol: -1 },
-  ];
-
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      for (const { dRow, dCol } of directions) {
-        const window: CellValue[] = [];
-        for (let i = 0; i < WINNING_LENGTH; i++) {
-          const r = row + i * dRow;
-          const c = col + i * dCol;
-          if (r < 0 || r >= ROWS || c < 0 || c >= COLS) break;
-          window.push(board[r][c]);
-        }
-        if (window.length === WINNING_LENGTH) {
-          score += evaluateWindow(window, player, opponent);
-        }
-      }
+  for (const w of WINDOWS) {
+    let playerCount = 0;
+    let opponentCount = 0;
+    for (let i = 0; i < w.length; i += 2) {
+      const cell = board[w[i]][w[i + 1]];
+      if (cell === player) playerCount++;
+      else if (cell !== null) opponentCount++;
     }
+    const emptyCount = WINNING_LENGTH - playerCount - opponentCount;
+
+    if (playerCount === 4) score += 100;
+    else if (playerCount === 3 && emptyCount === 1) score += 5;
+    else if (playerCount === 2 && emptyCount === 2) score += 2;
+    if (opponentCount === 3 && emptyCount === 1) score -= 4;
   }
 
   return score;
 }
 
-function evaluateWindow(window: CellValue[], player: CellValue, opponent: CellValue): number {
-  const playerCount = window.filter((c) => c === player).length;
-  const opponentCount = window.filter((c) => c === opponent).length;
-  const emptyCount = window.filter((c) => c === null).length;
-
-  if (playerCount === 4) return 100;
-  if (playerCount === 3 && emptyCount === 1) return 5;
-  if (playerCount === 2 && emptyCount === 2) return 2;
-  if (opponentCount === 3 && emptyCount === 1) return -4;
-  return 0;
-}
-
-// Minimax with alpha-beta pruning
+/**
+ * Minimax with alpha-beta pruning.
+ *
+ * Operates on a single mutable board (place piece → recurse → undo) instead
+ * of cloning at every node, and detects wins incrementally from the move
+ * just played. Together with center-first ordering this is orders of
+ * magnitude faster than the old clone-and-rescan search, which is what lets
+ * the hard AI search deeper while responding faster.
+ */
 function minimax(
   board: Board,
   depth: number,
@@ -127,20 +149,20 @@ function minimax(
   aiPlayer: CellValue
 ): number {
   const opponent: CellValue = aiPlayer === 1 ? 2 : 1;
-  const validCols = getValidColumns(board);
 
-  // Terminal conditions
-  if (checkWin(board, aiPlayer)) return 100000 + depth;
-  if (checkWin(board, opponent)) return -100000 - depth;
-  if (validCols.length === 0) return 0; // Draw
+  if (isBoardFull(board)) return 0; // Draw
   if (depth === 0) return evaluatePosition(board, aiPlayer);
 
   if (maximizingPlayer) {
     let maxEval = -Infinity;
-    for (const col of validCols) {
-      const newBoard = makeMove(board, col, aiPlayer);
-      if (!newBoard) continue;
-      const evalScore = minimax(newBoard, depth - 1, alpha, beta, false, aiPlayer);
+    for (const col of ORDERED_COLS) {
+      const row = getLowestEmptyRow(board, col);
+      if (row === -1) continue;
+      board[row][col] = aiPlayer;
+      const evalScore = isWinningMove(board, row, col, aiPlayer)
+        ? 100000 + depth
+        : minimax(board, depth - 1, alpha, beta, false, aiPlayer);
+      board[row][col] = null;
       maxEval = Math.max(maxEval, evalScore);
       alpha = Math.max(alpha, evalScore);
       if (beta <= alpha) break;
@@ -148,10 +170,14 @@ function minimax(
     return maxEval;
   } else {
     let minEval = Infinity;
-    for (const col of validCols) {
-      const newBoard = makeMove(board, col, opponent);
-      if (!newBoard) continue;
-      const evalScore = minimax(newBoard, depth - 1, alpha, beta, true, aiPlayer);
+    for (const col of ORDERED_COLS) {
+      const row = getLowestEmptyRow(board, col);
+      if (row === -1) continue;
+      board[row][col] = opponent;
+      const evalScore = isWinningMove(board, row, col, opponent)
+        ? -100000 - depth
+        : minimax(board, depth - 1, alpha, beta, true, aiPlayer);
+      board[row][col] = null;
       minEval = Math.min(minEval, evalScore);
       beta = Math.min(beta, evalScore);
       if (beta <= alpha) break;
@@ -160,108 +186,80 @@ function minimax(
   }
 }
 
+// Find an immediately winning column for `player`, or -1.
+function findImmediateWin(board: Board, player: CellValue, validCols: number[]): number {
+  for (const col of validCols) {
+    const row = getLowestEmptyRow(board, col);
+    if (row === -1) continue;
+    board[row][col] = player;
+    const wins = isWinningMove(board, row, col, player);
+    board[row][col] = null;
+    if (wins) return col;
+  }
+  return -1;
+}
+
+// Run a fixed-depth search from the root and return the best column.
+function getBestMove(board: Board, aiPlayer: CellValue, depth: number): number {
+  const work = cloneBoard(board);
+  const validCols = getValidColumns(work);
+  if (validCols.length === 0) return -1;
+
+  const opponent: CellValue = aiPlayer === 1 ? 2 : 1;
+
+  // Take a win / block a loss without searching.
+  const winCol = findImmediateWin(work, aiPlayer, validCols);
+  if (winCol !== -1) return winCol;
+  const blockCol = findImmediateWin(work, opponent, validCols);
+  if (blockCol !== -1) return blockCol;
+
+  let bestScore = -Infinity;
+  let bestCol = validCols[0];
+  let alpha = -Infinity;
+
+  for (const col of validCols) {
+    const row = getLowestEmptyRow(work, col);
+    if (row === -1) continue;
+    work[row][col] = aiPlayer;
+    const score = isWinningMove(work, row, col, aiPlayer)
+      ? 100000 + depth
+      : minimax(work, depth - 1, alpha, Infinity, false, aiPlayer);
+    work[row][col] = null;
+    if (score > bestScore) {
+      bestScore = score;
+      bestCol = col;
+    }
+    alpha = Math.max(alpha, score);
+  }
+
+  return bestCol;
+}
+
 // Easy AI: Random move with occasional blocking
 function getEasyMove(board: Board, aiPlayer: CellValue): number {
-  const validCols = getValidColumns(board);
+  const work = cloneBoard(board);
+  const validCols = getValidColumns(work);
   if (validCols.length === 0) return -1;
 
   const opponent: CellValue = aiPlayer === 1 ? 2 : 1;
 
   // 30% chance to block or win
   if (Math.random() < 0.3) {
-    // Check for winning move
-    for (const col of validCols) {
-      const newBoard = makeMove(board, col, aiPlayer);
-      if (newBoard && checkWin(newBoard, aiPlayer)) return col;
-    }
-    // Check for blocking move
-    for (const col of validCols) {
-      const newBoard = makeMove(board, col, opponent);
-      if (newBoard && checkWin(newBoard, opponent)) return col;
-    }
+    const winCol = findImmediateWin(work, aiPlayer, validCols);
+    if (winCol !== -1) return winCol;
+    const blockCol = findImmediateWin(work, opponent, validCols);
+    if (blockCol !== -1) return blockCol;
   }
 
   // Random move
   return validCols[Math.floor(Math.random() * validCols.length)];
 }
 
-// Medium AI: Always blocks/wins, some strategy
-function getMediumMove(board: Board, aiPlayer: CellValue): number {
-  const validCols = getValidColumns(board);
-  if (validCols.length === 0) return -1;
-
-  const opponent: CellValue = aiPlayer === 1 ? 2 : 1;
-
-  // Check for winning move
-  for (const col of validCols) {
-    const newBoard = makeMove(board, col, aiPlayer);
-    if (newBoard && checkWin(newBoard, aiPlayer)) return col;
-  }
-
-  // Check for blocking move
-  for (const col of validCols) {
-    const newBoard = makeMove(board, col, opponent);
-    if (newBoard && checkWin(newBoard, opponent)) return col;
-  }
-
-  // Use shallow minimax (depth 3)
-  let bestScore = -Infinity;
-  let bestCol = validCols[0];
-
-  for (const col of validCols) {
-    const newBoard = makeMove(board, col, aiPlayer);
-    if (!newBoard) continue;
-    const score = minimax(newBoard, 3, -Infinity, Infinity, false, aiPlayer);
-    if (score > bestScore) {
-      bestScore = score;
-      bestCol = col;
-    }
-  }
-
-  return bestCol;
-}
-
-// Hard AI: Deep minimax with alpha-beta pruning
-function getHardMove(board: Board, aiPlayer: CellValue): number {
-  const validCols = getValidColumns(board);
-  if (validCols.length === 0) return -1;
-
-  const opponent: CellValue = aiPlayer === 1 ? 2 : 1;
-
-  // Check for winning move first
-  for (const col of validCols) {
-    const newBoard = makeMove(board, col, aiPlayer);
-    if (newBoard && checkWin(newBoard, aiPlayer)) return col;
-  }
-
-  // Check for blocking move
-  for (const col of validCols) {
-    const newBoard = makeMove(board, col, opponent);
-    if (newBoard && checkWin(newBoard, opponent)) return col;
-  }
-
-  // Deep minimax (depth 6)
-  let bestScore = -Infinity;
-  let bestCol = validCols[0];
-
-  // Prefer center columns in evaluation order
-  const orderedCols = [...validCols].sort((a, b) => {
-    const center = COLS / 2;
-    return Math.abs(a - center) - Math.abs(b - center);
-  });
-
-  for (const col of orderedCols) {
-    const newBoard = makeMove(board, col, aiPlayer);
-    if (!newBoard) continue;
-    const score = minimax(newBoard, 6, -Infinity, Infinity, false, aiPlayer);
-    if (score > bestScore) {
-      bestScore = score;
-      bestCol = col;
-    }
-  }
-
-  return bestCol;
-}
+// Medium AI: Always blocks/wins, shallow search
+const MEDIUM_DEPTH = 4;
+// Hard AI: deep search. The optimized engine searches depth 8 faster than
+// the old one searched depth 6.
+const HARD_DEPTH = 8;
 
 // Main AI function
 export function getAIMove(board: Board, aiPlayer: CellValue, difficulty: AIDifficulty): number {
@@ -269,9 +267,9 @@ export function getAIMove(board: Board, aiPlayer: CellValue, difficulty: AIDiffi
     case 'easy':
       return getEasyMove(board, aiPlayer);
     case 'medium':
-      return getMediumMove(board, aiPlayer);
+      return getBestMove(board, aiPlayer, MEDIUM_DEPTH);
     case 'hard':
-      return getHardMove(board, aiPlayer);
+      return getBestMove(board, aiPlayer, HARD_DEPTH);
     default:
       return getEasyMove(board, aiPlayer);
   }

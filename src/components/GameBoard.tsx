@@ -1,9 +1,9 @@
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { COLS, ROWS } from '../types';
-import type { Board, Player, WinningLine } from '../types';
+import type { Board, CellValue, Player, WinningLine } from '../types';
 import { GamePiece } from './GamePiece';
-import { useState, useEffect } from 'react';
 
 interface GameBoardProps {
   board: Board;
@@ -14,6 +14,89 @@ interface GameBoardProps {
   canDropInColumn: (col: number) => boolean;
   lastMove: { row: number; col: number } | null;
 }
+
+// Static styles hoisted out of the render path so the 42 cells don't rebuild
+// them on every board/hover update.
+const cellSlotSx = {
+  width: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
+  height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
+  borderRadius: '50%',
+  background: 'linear-gradient(180deg, #0F172A, #1E293B)',
+  boxShadow: `
+    inset 0 4px 8px rgba(0,0,0,0.5),
+    inset 0 -2px 4px rgba(255,255,255,0.1),
+    0 2px 4px rgba(0,0,0,0.2)
+  `,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+} as const;
+
+const hoverScale = { scale: 1.05 };
+
+interface BoardCellProps {
+  cell: CellValue;
+  row: number;
+  col: number;
+  color: string | null;
+  isWinning: boolean;
+  isNew: boolean;
+  clickable: boolean;
+  cellHeight: number;
+  gapSize: number;
+  onColumnClick: (col: number) => void;
+  onHoverColumn: (col: number | null) => void;
+}
+
+/**
+ * One board slot. Memoized so hover/turn changes only re-render the cells
+ * whose props actually changed instead of all 42 (each with its own MUI sx
+ * resolution and framer-motion wrapper).
+ */
+const BoardCell = memo(function BoardCell({
+  cell,
+  row,
+  col,
+  color,
+  isWinning,
+  isNew,
+  clickable,
+  cellHeight,
+  gapSize,
+  onColumnClick,
+  onHoverColumn,
+}: BoardCellProps) {
+  const handleClick = useCallback(() => onColumnClick(col), [onColumnClick, col]);
+  const handleMouseEnter = useCallback(() => onHoverColumn(col), [onHoverColumn, col]);
+  const handleMouseLeave = useCallback(() => onHoverColumn(null), [onHoverColumn]);
+
+  return (
+    <motion.div
+      whileHover={clickable ? hoverScale : undefined}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{ cursor: clickable ? 'pointer' : 'default' }}
+    >
+      <Box sx={cellSlotSx}>
+        <AnimatePresence>
+          {cell !== null && color !== null && (
+            <GamePiece
+              color={color}
+              row={row}
+              isWinningPiece={isWinning}
+              isNew={isNew}
+              cellHeight={cellHeight}
+              gapSize={gapSize}
+            />
+          )}
+        </AnimatePresence>
+      </Box>
+    </motion.div>
+  );
+});
 
 export function GameBoard({
   board,
@@ -27,6 +110,15 @@ export function GameBoard({
   const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
   const [boardKey, setBoardKey] = useState(0);
 
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
+  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+
+  // Cell metrics for the piece drop animation, computed once here instead of
+  // running two media queries inside every piece.
+  const cellHeight = isXs ? 42 : isSm ? 60 : 70;
+  const gapSize = isXs ? 4 : isSm ? 6 : 8;
+
   // Track when the board resets
   useEffect(() => {
     const isEmpty = board.every((row) => row.every((cell) => cell === null));
@@ -35,14 +127,25 @@ export function GameBoard({
     }
   }, [board]);
 
-  const isWinningCell = (row: number, col: number): boolean => {
-    if (!winner) return false;
-    return winner.cells.some((cell) => cell.row === row && cell.col === col);
-  };
+  // O(1) winning-cell lookups instead of scanning the winner line per cell.
+  const winningCells = useMemo(() => {
+    const cells = new Set<number>();
+    if (winner) {
+      for (const cell of winner.cells) {
+        cells.add(cell.row * COLS + cell.col);
+      }
+    }
+    return cells;
+  }, [winner]);
 
-  const isLastMove = (row: number, col: number): boolean => {
-    return lastMove?.row === row && lastMove?.col === col;
-  };
+  // Evaluate droppability once per column per render, not once per cell.
+  // (canDropInColumn's identity changes whenever board/winner state does.)
+  const droppableCols = useMemo(
+    () => Array.from({ length: COLS }, (_, col) => canDropInColumn(col)),
+    [canDropInColumn]
+  );
+
+  const currentColor = players[currentPlayer - 1].color;
 
   return (
     <Box
@@ -81,8 +184,8 @@ export function GameBoard({
               width: { xs: 30, md: 40 },
               height: { xs: 30, md: 40 },
               borderRadius: '50%',
-              background: `radial-gradient(circle at 30% 30%, ${players[currentPlayer - 1].color}, ${players[currentPlayer - 1].color}99)`,
-              boxShadow: `0 0 15px ${players[currentPlayer - 1].color}`,
+              background: `radial-gradient(circle at 30% 30%, ${currentColor}, ${currentColor}99)`,
+              boxShadow: `0 0 15px ${currentColor}`,
             }}
           />
           <Typography
@@ -125,7 +228,7 @@ export function GameBoard({
               }}
             >
               <AnimatePresence>
-                {hoveredColumn === col && canDropInColumn(col) && !winner && (
+                {hoveredColumn === col && droppableCols[col] && !winner && (
                   <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 0.7, y: 0 }}
@@ -137,9 +240,9 @@ export function GameBoard({
                         width: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
                         height: { xs: 'min(10vw, 35px)', sm: 45, md: 50 },
                         borderRadius: '50%',
-                        background: players[currentPlayer - 1].color,
+                        background: currentColor,
                         opacity: 0.7,
-                        boxShadow: `0 0 20px ${players[currentPlayer - 1].color}`,
+                        boxShadow: `0 0 20px ${currentColor}`,
                       }}
                     />
                   </motion.div>
@@ -195,46 +298,20 @@ export function GameBoard({
         >
           {board.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
-              <motion.div
+              <BoardCell
                 key={`${rowIndex}-${colIndex}`}
-                whileHover={canDropInColumn(colIndex) && !winner ? { scale: 1.05 } : {}}
-                onClick={() => onColumnClick(colIndex)}
-                onMouseEnter={() => setHoveredColumn(colIndex)}
-                onMouseLeave={() => setHoveredColumn(null)}
-                style={{
-                  cursor: canDropInColumn(colIndex) && !winner ? 'pointer' : 'default',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
-                    height: { xs: 'min(12vw, 42px)', sm: '60px', md: '70px' },
-                    borderRadius: '50%',
-                    background: 'linear-gradient(180deg, #0F172A, #1E293B)',
-                    boxShadow: `
-                      inset 0 4px 8px rgba(0,0,0,0.5),
-                      inset 0 -2px 4px rgba(255,255,255,0.1),
-                      0 2px 4px rgba(0,0,0,0.2)
-                    `,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <AnimatePresence>
-                    {cell !== null && (
-                      <GamePiece
-                        color={players[cell - 1].color}
-                        row={rowIndex}
-                        isWinningPiece={isWinningCell(rowIndex, colIndex)}
-                        isNew={isLastMove(rowIndex, colIndex)}
-                      />
-                    )}
-                  </AnimatePresence>
-                </Box>
-              </motion.div>
+                cell={cell}
+                row={rowIndex}
+                col={colIndex}
+                color={cell !== null ? players[cell - 1].color : null}
+                isWinning={winningCells.has(rowIndex * COLS + colIndex)}
+                isNew={lastMove?.row === rowIndex && lastMove?.col === colIndex}
+                clickable={droppableCols[colIndex] && !winner}
+                cellHeight={cellHeight}
+                gapSize={gapSize}
+                onColumnClick={onColumnClick}
+                onHoverColumn={setHoveredColumn}
+              />
             ))
           )}
         </Box>
